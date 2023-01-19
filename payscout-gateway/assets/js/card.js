@@ -90,8 +90,8 @@ document.addEventListener('DOMContentLoaded', function(event) {
 						});
 					}
 				});
-				
-				card.on('blur', function(e){
+								
+				let processTransaction = (function(e){
 					let address_fields = {'city':'city','country':'country','address_1':'line1','address_2':'line2','postcode':'postal_code','state':'state','phone':'phone'};
 
 					if(document.querySelector('.woocommerce-billing-fields') && document.querySelector('.woocommerce-billing-fields').style.display !== "none"){
@@ -191,6 +191,18 @@ document.addEventListener('DOMContentLoaded', function(event) {
 						return;
 					});
 				});
+
+				card.on('blur', function(e){
+					processTransaction(e);
+				});
+				/*
+			    var timer;
+   
+                card.on('change', function(e){
+                    clearTimeout(timer);
+                    timer = setTimeout(processTransaction(e), 2500);
+                });
+				*/
 			}
 
 		}).catch(() => {		

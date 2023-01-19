@@ -97,6 +97,8 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		}
 		
 		public function enqueue_scripts($params){
+			wp_register_style('payscout', PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/css/payscout.css');
+			wp_enqueue_style('payscout');
 			wp_register_script('payscout', $this->script_library, '', '1.0', true);
 			wp_enqueue_script('payscout');
 			wp_register_script('payscout_native', PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/js/card.js?ver='.(defined('PAYSCOUT_PAYWIRE_GATEWAY_VERSION')? PAYSCOUT_PAYWIRE_GATEWAY_VERSION : '1.0.0'), ['payscout'], PAYSCOUT_PAYWIRE_GATEWAY_VERSION, true);

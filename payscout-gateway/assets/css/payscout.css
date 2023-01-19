@@ -1,0 +1,24 @@
+.alert {
+	padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+}
+.alert-danger {
+	background-color: #f2dede;
+    border-color: #ebcccc;
+    color: #a94442;
+}
+.alert-warning {
+	background-color: #fcf8e3;
+    border-color: #faf2cc;
+    color: #8a6d3b;
+}
+.alert-success {
+	background-color: #dff0d8;
+    border-color: #d0e9c6;
+    color: #3c763d;
+}
+.payment_method_payscout img {
+	max-width: 30px;	
+}
