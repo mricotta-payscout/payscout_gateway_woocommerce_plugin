@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 				if(target.ariaDisabled === 'true'){
 					event.preventDefault();
 					target.setAttribute('aria-disabled', false);
+					target.classList.remove('disabled');
 				} else {
 					target.removeEventListener('click', preventOnClick);
 				}
@@ -86,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 					if(document.querySelector('[type="submit"]')){
 						document.querySelectorAll('[type="submit"]').forEach((button) => {
 							button.setAttribute('aria-disabled', true);
+							button.classList.add('disabled');
 							button.addEventListener('click', preventOnClick);
 						});
 					}
@@ -152,6 +154,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
 							} else {
 								showMessage('error',result.error.message);
 							}
+					  } else if(!result) {
+						  // If the previous step is false, we should already have a message from either the 1st
+						  // condition or the 2nd condition which is caught.
 					  } else {
 						showMessage('success','Payment Method Valid');
 					  }
@@ -160,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 						  document.querySelectorAll('[type="submit"]').forEach((button) => {
 							  if(button.ariaDisabled === 'true'){
 								button.setAttribute('aria-disabled', false);
+								button.classList.remove('disabled');
 								button.removeEventListener('click', preventOnClick);
 							  }
 						  });
@@ -183,6 +189,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 							document.querySelectorAll('[type="submit"]').forEach((button) => {
 								if(button.ariaDisabled === 'true'){
 									button.setAttribute('aria-disabled', false);
+									button.classList.remove('disabled');
 									button.removeEventListener('click', preventOnClick);
 								}
 							});
