@@ -164,9 +164,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
 					  if(document.querySelector('[type="submit"]')){
 						  document.querySelectorAll('[type="submit"]').forEach((button) => {
 							  if(button.ariaDisabled === 'true'){
-								button.setAttribute('aria-disabled', false);
-								button.classList.remove('disabled');
-								button.removeEventListener('click', preventOnClick);
+								  setTimeout(function () {
+									button.setAttribute('aria-disabled', false);
+									button.classList.remove('disabled');
+									button.removeEventListener('click', preventOnClick);
+								  }, 500);
 							  }
 						  });
 					  }
@@ -188,9 +190,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
 						if(document.querySelector('[type="submit"]')){
 							document.querySelectorAll('[type="submit"]').forEach((button) => {
 								if(button.ariaDisabled === 'true'){
+								  setTimeout(function () {
 									button.setAttribute('aria-disabled', false);
 									button.classList.remove('disabled');
 									button.removeEventListener('click', preventOnClick);
+								  }, 500);
 								}
 							});
 						}
