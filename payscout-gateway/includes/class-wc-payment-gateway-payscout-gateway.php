@@ -16,6 +16,9 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		 * Constructor for the gateway.
 		 */
 		public function __construct() {
+			
+			$this->force_guest_session();
+			
 			// Setup general properties.
 			$this->setup_properties();
 			
@@ -54,6 +57,18 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			
 			if(!empty($this->public_key) && !empty($this->client_secret)){
 				add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
+			}
+		}
+		
+		// Add call back function for sessions.
+		public function force_guest_session() {
+			if (is_user_logged_in() || is_admin()) {
+				return;
+			}
+			if (isset(WC()->session)) {
+				if (!WC()->session->has_session()) {
+					WC()->session->set_customer_session_cookie(true);
+				}
 			}
 		}
 
@@ -270,7 +285,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 
 			if(!empty($this->client_secret)){
 				return $this->client_secret;
-			} else if(!empty(WC()->session) && !empty(WC()->session->get('payscout_gateway_client_secret'))){
+			} else if(isset(WC()->session) && !empty(WC()->session->get('payscout_gateway_client_secret'))){
 				$this->client_secret = WC()->session->get('payscout_gateway_client_secret');
 				return $this->client_secret;
 			}
@@ -308,7 +323,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 				$postdata = json_decode(json_encode($post_data));
 
 				$pi = WC_Payscout_API::create_payment_intent($postdata);
-
+				
 				if(isset($pi['body'])){
 					$body = json_decode($pi['body']);
 					$result = $body->client_secret;
