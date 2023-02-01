@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 				let params = { card: card };
 				
 				card.on('focus', function(e){
+					clearMessage();
 					if(document.querySelector('[type="submit"]')){
 						document.querySelectorAll('[type="submit"]').forEach((button) => {
 							button.setAttribute('aria-disabled', true);
