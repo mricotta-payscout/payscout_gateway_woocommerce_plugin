@@ -46,7 +46,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
 						
 			let card = components.create('card', {style: style});
 			card.mount('#payscout_paywire_gateway_container');
-
+            
+			document.querySelector('#reloadButton').remove();
+			
 			function clearMessage(){
 				let item = document.querySelector('#payscout_paywire_gateway_message');
 				item.textContent = '';
