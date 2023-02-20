@@ -510,9 +510,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			}
 
 			$order = wc_get_order( $order_id );
-			$pi_arr = explode('_', $this->client_secret); 
-			$order->set_transaction_id( $pi_arr[1] );
-			$order->save();
+
 			if ( $order->get_total() > 0 ) {
 				$this->payscout_payment_processing( $order_id );
 			} else {
@@ -673,10 +671,14 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 					}
 				}
 			}
+			
+			$order->set_transaction_id( $this->payment_intent );
+			
 			if($flag === false){
 				$localized_message = !empty($localized_message)? $localized_message : __( 'Payment processing failed. Please retry.', 'payscout-gateway' );
 				$order->add_order_note( $localized_message );
 				$this->unlock_order_payment( $order );
+				$order->save();
 				throw new \Exception( $localized_message );
 			} else {
 				$order->payment_complete();
