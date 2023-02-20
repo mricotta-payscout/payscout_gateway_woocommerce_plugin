@@ -298,7 +298,8 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 							'payment_method_types'=>['card','us_bank_account'],
 							'capture_method'=>'manual',
 							'confirmation_method'=>'automatic',
-							'application'=>'ArcanePOS'
+							'application'=>'EPF'
+							//'application'=>'ArcanePOS'
 						];
 						
 			//$post_data['currency'] = get_option('woocommerce_currency','usd');
@@ -481,6 +482,20 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			// First, match entries in 'method_id:instance_id' format. Then, match entries in 'method_id' format by stripping off the instance ID from the candidates.
 			return array_unique( array_merge( array_intersect( $this->enable_for_methods, $rate_ids ), array_intersect( $this->enable_for_methods, array_unique( array_map( 'wc_get_string_before_colon', $rate_ids ) ) ) ) );
 		}
+		
+		public function get_transaction_url( $order ){
+
+			$return_url     = '';
+			$transaction_id = $order->get_transaction_id();
+			
+			$this->view_transaction_url = "https://dbtranz.paywire.com/";
+
+			if ( ! empty( $this->view_transaction_url ) && ! empty( $transaction_id ) ) {
+			  $return_url = sprintf( $this->view_transaction_url, $transaction_id );
+			}
+
+			return apply_filters( 'woocommerce_get_transaction_url', $return_url, $order, $this );
+		}
 
 		/**
 		 * Process the payment and return the result.
@@ -495,7 +510,9 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			}
 
 			$order = wc_get_order( $order_id );
-
+			$pi_arr = explode('_', $this->client_secret); 
+			$order->set_transaction_id( $pi_arr[1] );
+			$order->save();
 			if ( $order->get_total() > 0 ) {
 				$this->payscout_payment_processing( $order_id );
 			} else {
