@@ -27,6 +27,9 @@ add_filter( 'woocommerce_currencies', 'payscout_add_world_currencies' );
 add_filter( 'woocommerce_currency_symbol', 'payscout_add_world_currencies_symbol', 10, 2 );
 add_action( 'wp_enqueue_scripts', 'payscout_disable_woocommerce_loading_js' );
 
+add_action('payscout_reconcile_cron_hook', 'payscout_update_order_statuses');
+register_activation_hook( __FILE__, 'payscout_reconcile_order_statuses_activate' );
+
 function payscout_payment_init(){
 
 	define( 'PAYSCOUT_PAYWIRE_GATEWAY_VERSION', '2.2.3' );
@@ -77,6 +80,8 @@ function payscout_payment_init(){
 			 * *Singleton* via the `new` operator from outside of this class.
 			 */
 			private function __construct() {
+				register_deactivation_hook( __FILE__, [$this,'reconcile_order_statuses_deactivate'] ); 				
+				
 				add_action( 'admin_init', array( $this, 'install' ) );
 				$this->init();
 			}
@@ -131,10 +136,25 @@ function payscout_payment_init(){
 				$links[] = $settings_link;
 				return $links;
 			}
+
+			public function reconcile_order_statuses_deactivate() {
+				$timestamp = wp_next_scheduled( 'payscout_reconcile_cron_hook' );
+				wp_unschedule_event( $timestamp, 'payscout_reconcile_cron_hook' );
+			}
 	}
 		
 	WC_Payment_Gateway_Init::get_instance();
 	
+}
+
+function payscout_reconcile_order_statuses_activate() {
+	if ( ! wp_next_scheduled( 'payscout_reconcile_cron_hook' ) ) {
+		wp_schedule_event( strtotime( '1am tomorrow' ), 'daily', 'payscout_reconcile_cron_hook' );
+	}
+}
+
+function payscout_update_order_statuses(){
+	return WC_Payscout_Paywire_Gateway::update_order_statuses();
 }
 
 function payscout_add_payment_gateway( $gateways ){

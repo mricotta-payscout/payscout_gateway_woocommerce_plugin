@@ -605,6 +605,59 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 
 		}
 		
+		/**
+		 * Gets all order statuses of "pending" or "processing" passes them to the update order status method.
+		**/
+		public static function update_order_statuses(){
+			// Get all orders where status is pending
+			$orders = wc_get_orders(array(
+				'limit'=>-1,
+				'type'=> 'shop_order',
+				'status'=> array( 'wc-pending', 'pending', 'wc-processing', 'processing' )
+				)
+			);
+			foreach($orders as $order){
+				$order_id = $order->get_id();
+				self::update_order_status( $order_id );
+			}
+		}
+		
+		/**
+		 * Reconciles a pending order with its pi status
+		**/
+		public static function update_order_status( $order_id ){
+			// Get the order
+			$order = wc_get_order($order_id);
+			// Get the order status (for good measure)
+			$oi_status = $order->get_status();
+			// Get the payment method
+			$pm = $order->get_payment_method();
+			// Get the transaction ID
+			$pid = $order->get_transaction_id();
+			if(!empty($pid) && $pm==='payscout'){
+				// Get the payment intent
+				$pi = WC_Payscout_API::get_payment_intent($pid);
+				if(!empty($pi)&&!empty($pi['body'])){
+					$pi = json_decode($pi['body']);
+					// Get payment intent status | [succeeded,requires_payment_method,requires_confirmation,requires_capture,canceled]
+					$pi_status = !empty($pi->status)? $pi->status : $oi_status;
+					// Get payment intent create date;
+					$pi_date = !empty($pi->created)? $pi->created : time();
+					// If the Payment intent is successful, then the order should be changed to successful
+					if($pi_status==='succeeded'&&!in_array($oi_status,['wc-completed','completed'])){
+						$order->payment_complete();
+						//$order->update_status( apply_filters( 'woocommerce_payscout_process_payment_order_status', $order->has_downloadable_item() ? 'wc-invoiced' : 'processing', $order ), __( 'Payments pending.', 'payscout-gateway' ) );
+						$order->set_status('completed');
+						$order->save();
+					// If the Payment intent is more than 1 week old and order remains pending, close it.
+					} else if(in_array($pi_status,['canceled','cancelled','failed','declined'])||(($pi_date < (time() - 604800)) && in_array($oi_status,['wc-pending','pending']))){
+						$order->set_status('failed');
+						$order->save();
+					}
+				}
+			}
+		}
+		
 		private function payscout_payment_processing( $order_id ){
 
 			if(empty($this->client_secret)){
