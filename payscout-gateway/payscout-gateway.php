@@ -149,7 +149,7 @@ function payscout_payment_init(){
 
 function payscout_reconcile_order_statuses_activate() {
 	if ( ! wp_next_scheduled( 'payscout_reconcile_cron_hook' ) ) {
-		wp_schedule_event( strtotime( '1am tomorrow' ), 'daily', 'payscout_reconcile_cron_hook' );
+		wp_schedule_event( time(), 'daily', 'payscout_reconcile_cron_hook' );
 	}
 }
 

@@ -609,12 +609,11 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		 * Gets all order statuses of "pending" or "processing" passes them to the update order status method.
 		**/
 		public static function update_order_statuses(){
-			error_log('running the cron job');
 			// Get all orders where status is pending
 			$orders = wc_get_orders(array(
 				'limit'=>-1,
 				'type'=> 'shop_order',
-				'orderby' => 'created',
+				'orderby' => 'date',
 				'order' => 'DESC',
 				'status'=> array( 'wc-pending', 'pending', 'wc-processing', 'processing' )
 				)
@@ -643,7 +642,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 				$args = array(
 					'meta_key' => '_transaction_id',
 					'meta_value' => $pid,
-					'orderby' => 'created',
+					'orderby' => 'date',
 					'order' => 'DESC',
 				);
 				$other_orders = wc_get_orders( $args );
