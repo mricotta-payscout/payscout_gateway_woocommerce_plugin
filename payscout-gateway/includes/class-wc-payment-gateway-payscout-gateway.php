@@ -650,7 +650,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 						$order->set_status('completed');
 						$order->save();
 					// If the Payment intent is more than 1 week old and order remains pending, close it.
-					} else if(in_array($pi_status,['canceled','cancelled','failed','declined'])||(($pi_date < (time() - 604800)) && in_array($oi_status,['wc-pending','pending']))){
+					} else if(in_array($pi_status,['canceled','cancelled','failed','declined'])||(($pi_date < (time() - 604800)) && in_array($oi_status,['wc-pending','pending','wc-processing','processing']))){
 						$order->set_status('failed');
 						$order->save();
 					}
