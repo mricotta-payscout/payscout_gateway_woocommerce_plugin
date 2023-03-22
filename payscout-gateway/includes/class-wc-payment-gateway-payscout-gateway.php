@@ -613,6 +613,8 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			$orders = wc_get_orders(array(
 				'limit'=>-1,
 				'type'=> 'shop_order',
+				'orderby' => 'modified',
+				'order' => 'DESC',
 				'status'=> array( 'wc-pending', 'pending', 'wc-processing', 'processing' )
 				)
 			);
@@ -635,6 +637,24 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			// Get the transaction ID
 			$pid = $order->get_transaction_id();
 			if(!empty($pid) && $pm==='payscout'){
+				// Check to see if any newer orders with the same transaction ID exist
+				// This should not occur naturally
+				$args = array(
+					'meta_key' => '_transaction_id',
+					'meta_value' => $pid,
+					'orderby' => 'modified',
+					'order' => 'DESC',
+				);
+				$other_orders = new wc_get_orders( $args );
+				foreach($other_orders as $other_order){
+					$other_order_id = $other_order->get_id();
+					// Since we are ordered in descending date, the first one should be the latest
+					// the remainder should be unset
+					if($other_order_id !== $order_id){
+						$other_order->set_transaction_id(null);
+						$other_order->save();
+					}
+				}
 				// Get the payment intent
 				$pi = WC_Payscout_API::get_payment_intent($pid);
 				if(!empty($pi)&&!empty($pi['body'])){
