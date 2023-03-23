@@ -609,6 +609,21 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		 * Gets all order statuses of "pending" or "processing" passes them to the update order status method.
 		**/
 		public static function update_order_statuses(){
+			// Get all orders affected by the patch
+			/*
+			$initial_date = strtotime('2023-03-22 19:15:00.000');
+			$final_date = strtotime('2023-03-22 19:45:00.000');
+			$affected = wc_get_orders(array(
+				'limit'=>-1,
+				'type'=> 'shop_order',
+				'date_paid' => $initial_date .'...'. $final_date ,
+				'status'=> array( 'wc-completed', 'completed' )
+				)
+			);
+			foreach($affected as $aff){
+				error_log('affected: '.$aff->get_id().' paid_date: '.$aff->get_date_paid());
+			}
+			*/
 			// Get all orders where status is pending
 			$orders = wc_get_orders(array(
 				'limit'=>-1,
@@ -618,9 +633,11 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 				'status'=> array( 'wc-pending', 'pending', 'wc-processing', 'processing' )
 				)
 			);
-			foreach($orders as $order){
-				$order_id = $order->get_id();
-				self::update_order_status( $order_id );
+			if(!empty($orders)){
+				foreach($orders as $order){
+					$order_id = $order->get_id();
+					self::update_order_status( $order_id );
+				}
 			}
 		}
 		
