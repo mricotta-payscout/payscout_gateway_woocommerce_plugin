@@ -610,9 +610,9 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		**/
 		public static function update_order_statuses(){
 			// Get all orders affected by the patch
-			/*
-			$initial_date = strtotime('2023-03-22 19:15:00.000');
-			$final_date = strtotime('2023-03-22 19:45:00.000');
+/*
+			$initial_date = strtotime('2023-03-22 19:20:00.000');
+			$final_date = strtotime('2023-03-22 19:40:00.000');
 			$affected = wc_get_orders(array(
 				'limit'=>-1,
 				'type'=> 'shop_order',
@@ -621,9 +621,21 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 				)
 			);
 			foreach($affected as $aff){
-				error_log('affected: '.$aff->get_id().' paid_date: '.$aff->get_date_paid());
+				error_log($aff->get_id().' '.$aff->get_transaction_id().' checking...');
+				$args = array(
+					'meta_key' => '_transaction_id',
+					'meta_value' => $aff->get_transaction_id(),
+					'orderby' => 'date',
+					'order' => 'DESC',
+				);
+				$other_orders = wc_get_orders( $args );
+				foreach($other_orders as $other_order){
+					if($other_order->get_id() !== $aff->get_id()){
+						error_log($other_order->get_id().' DUPLICATE ');
+					}
+				}
 			}
-			*/
+*/			
 			// Get all orders where status is pending
 			$orders = wc_get_orders(array(
 				'limit'=>-1,
@@ -663,13 +675,23 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 					'order' => 'DESC',
 				);
 				$other_orders = wc_get_orders( $args );
+				$completed = false;
+				// First check to see if any of the matching orders are already marked completed
 				foreach($other_orders as $other_order){
-					$other_order_id = $other_order->get_id();
-					// Since we are ordered in descending date, the first one should be the latest
-					// the remainder should be unset
-					if($other_order_id !== $order_id){
-						$other_order->set_transaction_id(null);
-						$other_order->save();
+					$other_order_status = $other_order->get_status();
+					if(in_array($other_order_status,['wc-completed','completed'])){
+						$completed = true;
+					}
+				}
+				if(!$completed){
+					foreach($other_orders as $other_order){
+						$other_order_id = $other_order->get_id();
+						// Since we are ordered in descending date, the first one should be the latest
+						// the remainder should be unset
+						if($other_order_id !== $order_id){
+							$other_order->set_transaction_id(null);
+							$other_order->save();
+						}
 					}
 				}
 				// Get the payment intent
