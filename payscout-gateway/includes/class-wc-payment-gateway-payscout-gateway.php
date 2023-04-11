@@ -1,50 +1,72 @@
 <?php
 /**
- * Payscout Gateway
+ * Provides the Payscout Paywire Gateway
  *
- * Provides a Payscout or Paywire Payment Gateway.
- *
- * @class       WC_Payscout_Paywire_Gateway
- * @extends     WC_Payment_Gateway
- * @version     1.0.0
- * @package     WooCommerce\Classes\Payment
+ * @package 1.0.0
  */
-if(!class_exists('WC_Payscout_Paywire_Gateway')){
+
+/**
+ * Plugin Name: Payscout Paywire Gateway
+ * Plugin URI: https://www.payscout.com
+ * Description: Take credit card payments using Payscout / Paywire
+ * Author: Payscout
+ * Author URI: https://www.payscout.com/
+ * Contributors: Arcane Strategies
+ * Version: 1.0.0
+ * Requires at least: 5.5.0
+ * Tested up to: 6.2
+ * WC requires at least: 5.1.0
+ * WC tested up to: 7.5.1
+ * Text Domain: payscout-gateway
+ * Domain Path: /languages
+ */
+if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
+
+	/**
+	 * Gateway class.
+	 *
+	 * @version 1.0.0
+	 * @since 1.0.0
+	 */
 	class WC_Payscout_Paywire_Gateway extends WC_Payment_Gateway {
 
 		/**
 		 * Constructor for the gateway.
+		 *
+		 * @since 1.0.0
+		 * @version 1.0.0
 		 */
 		public function __construct() {
-			
+
 			$this->force_guest_session();
-			
+
 			// Setup general properties.
 			$this->setup_properties();
-			
+
 			// Load the settings.
 			$this->init_form_fields();
 			$this->init_settings();
 
 			// Get settings.
-			$this->title              = $this->settings[ 'title' ];
-			$this->description        = $this->settings[ 'description'];
-			$this->style              = $this->get_option( 'style' , '');
-			$this->instructions       = $this->settings[ 'instructions' ];
+			$this->title              = $this->settings['title'];
+			$this->description        = $this->settings['description'];
+			$this->style              = $this->get_option( 'style', '' );
+			$this->instructions       = $this->settings['instructions'];
 			$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
 			$this->enable_for_virtual = $this->get_option( 'enable_for_virtual', 'yes' ) === 'yes';
 			$this->client_secret      = $this->make_client_secret();
-			$this->livemode			  = $this->get_option( 'livemode', 'no' );
-			
-			if($this->livemode === 'yes'){
-				$this->public_key         = $this->get_option( 'public_key' , '');
-				$this->secret_key         = $this->get_option( 'secret_key' , '');
+			$this->livemode           = $this->get_option( 'livemode', 'no' );
+
+			if ( 'yes' === $this->livemode ) {
+				$this->public_key     = $this->get_option( 'public_key', '' );
+				$this->secret_key     = $this->get_option( 'secret_key', '' );
 				$this->script_library = 'https://dbtranz.paywire.com/epf/library/embed.js';
 			} else {
-				$this->public_key         = $this->get_option( 'public_test' , '');
-				$this->secret_key         = $this->get_option( 'secret_test' , '');
+				$this->public_key     = $this->get_option( 'public_test', '' );
+				$this->secret_key     = $this->get_option( 'secret_test', '' );
+				$this->secret_key     = $this->get_option( 'secret_test', '' );
 				$this->script_library = 'https://dbstage1.paywire.com/epf/library/embed.js';
-				//$this->script_library = 'http://www.paywire.com/library/embed.js';
+				/*$this->script_library = 'http://www.paywire.com/library/embed.js';*/
 			}
 
 			// Actions.
@@ -54,86 +76,116 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 
 			// Customer Emails.
 			add_action( 'woocommerce_email_before_order_table', array( $this, 'email_instructions' ), 10, 3 );
-			
-			if(!empty($this->public_key) && !empty($this->client_secret)){
+
+			if ( ! empty( $this->public_key ) && ! empty( $this->client_secret ) ) {
 				add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
 			}
 		}
-		
-		// Add call back function for sessions.
+
+		/**
+		 * Adds a call back function for sessions.
+		 *
+		 * @since 1.0.0
+		 * @version 1.0.0
+		 */
 		public function force_guest_session() {
-			if (is_user_logged_in() || is_admin()) {
+			if ( is_user_logged_in() || is_admin() ) {
 				return;
 			}
-			if (isset(WC()->session)) {
-				if (!WC()->session->has_session()) {
-					WC()->session->set_customer_session_cookie(true);
+			if ( isset( WC()->session ) ) {
+				if ( ! WC()->session->has_session() ) {
+					WC()->session->set_customer_session_cookie( true );
 				}
 			}
 		}
 
 		/**
 		 * Setup general properties for the gateway.
+		 *
+		 * @since 1.0.0
+		 * @version 1.0.0
 		 */
 		protected function setup_properties() {
 			$this->id                 = 'payscout';
-			$this->icon               = apply_filters( 'woocommerce_payscout_icon', plugins_url('../assets/logo.svg', __FILE__ ));
+			$this->icon               = apply_filters( 'woocommerce_payscout_icon', plugins_url( '../assets/logo.svg', __FILE__ ) );
 			$this->method_title       = __( 'Payscout', 'payscout-gateway' );
 			$this->method_description = __( 'Have your customers pay with Payscout or Paywire.', 'payscout-gateway' );
 			$this->has_fields         = false;
 		}
-		
+
 		/**
+		 * Gets and sets JS files based on the output type (standard vs pos).
 		 *
+		 * @since 1.0.0
 		 */
 		public function payment_scripts() {
-			$params = [
-				'key'	=> $this->public_key,
-				'style'	=> $this->style,
-				'client_secret' => $this->client_secret
-			];
-			
-			if(function_exists( 'is_pos' ) && is_pos()){
-				$this->echo_scripts($params);
+			$params = array(
+				'key'           => $this->public_key,
+				'style'         => $this->style,
+				'client_secret' => $this->client_secret,
+			);
+
+			if ( function_exists( 'is_pos' ) && is_pos() ) {
+				$this->echo_scripts( $params );
 			} else {
-				$this->enqueue_scripts($params);
+				$this->enqueue_scripts( $params );
 			}
 			$this->tokenization_script();
 		}
-		
+
+		/**
+		 * Format JS filepaths for embedding
+		 *
+		 * @since 1.0.0
+		 * @param string $script filename.
+		 */
 		private function format_js( $script ) {
-			if ( substr( $script, 0, 7 ) === '<script' )
-			  return $script;
-
-			if ( substr( $script, 0, 4 ) === 'http' )
-			  return '<script src="' . $script . '"></script>';
-
+			if ( '<script' === substr( $script, 0, 7 ) ) {
+				return $script;
+			}
+			if ( 'http' === substr( $script, 0, 4 ) ) {
+				return '<script src="' . $script . '"></script>';
+			}
 			return '<script>' . $script . '</script>';
 		}
-		
-		public function enqueue_scripts($params){
-			wp_register_style('payscout', PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/css/payscout.css');
-			wp_enqueue_style('payscout');
-			wp_register_script('payscout', $this->script_library, '', '1.0', true);
-			wp_enqueue_script('payscout');
-			wp_register_script('payscout_native', PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/js/card.js?ver='.(defined('PAYSCOUT_PAYWIRE_GATEWAY_VERSION')? PAYSCOUT_PAYWIRE_GATEWAY_VERSION : '1.0.0'), ['payscout'], PAYSCOUT_PAYWIRE_GATEWAY_VERSION, true);
-			wp_enqueue_script('payscout_native');
-			wp_localize_script('payscout_native', 'wc_payment_gateway_params', apply_filters('wc_payment_gateway_params',$params));
+
+		/**
+		 * Queues scripts
+		 *
+		 * @since 1.0.0
+		 * @param array $params URL parameters for JS.
+		 */
+		public function enqueue_scripts( $params ) {
+			wp_register_style( 'payscout', PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/css/payscout.css', array(), '1.0.0' );
+			wp_enqueue_style( 'payscout' );
+			wp_register_script( 'payscout', $this->script_library, '', '1.0', true );
+			wp_enqueue_script( 'payscout' );
+			wp_register_script( 'payscout_native', PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/js/card.js?ver=' . ( defined( 'PAYSCOUT_PAYWIRE_GATEWAY_VERSION' ) ? PAYSCOUT_PAYWIRE_GATEWAY_VERSION : '1.0.0' ), array( 'payscout' ), PAYSCOUT_PAYWIRE_GATEWAY_VERSION, true );
+			wp_enqueue_script( 'payscout_native' );
+			wp_localize_script( 'payscout_native', 'wc_payment_gateway_params', apply_filters( 'wc_payment_gateway_params', $params ) );
 		}
-		
-		public function echo_scripts($params){
-			$scripts = [
-							$this->script_library,
-							PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/js/card.js?ver='.(defined('PAYSCOUT_PAYWIRE_GATEWAY_VERSION')? PAYSCOUT_PAYWIRE_GATEWAY_VERSION : '1.0.0'),
-							'var wc_payment_gateway_params = '.json_encode($params)
-			];
+
+		/**
+		 * Echos scripts in the event an alternative DOM renderer is used as is ofen the case with POS themes and plugins.
+		 *
+		 * @since 1.0.0
+		 * @param array $params URL parameters for CDN load.
+		 */
+		public function echo_scripts( $params ) {
+			$scripts = array(
+				$this->script_library,
+				PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/js/card.js?ver=' . ( defined( 'PAYSCOUT_PAYWIRE_GATEWAY_VERSION' ) ? PAYSCOUT_PAYWIRE_GATEWAY_VERSION : '1.0.0' ),
+				'var wc_payment_gateway_params = ' . wp_json_encode( $params ),
+			);
 			foreach ( $scripts as $script ) {
-			  echo $this->format_js( trim( $script ) ) . "\n";
+				echo $this->format_js( trim( $script ) ) . "\n";
 			}
 		}
 
 		/**
 		 * Initialise Gateway Settings Form Fields.
+		 *
+		 * @since 1.0.0
 		 */
 		public function init_form_fields() {
 			$this->form_fields = array(
@@ -144,7 +196,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 					'description' => '',
 					'default'     => 'no',
 				),
-				'livemode'            => array(
+				'livemode'           => array(
 					'title'       => __( 'Live/Test', 'payscout-gateway' ),
 					'label'       => __( 'Enable live mode via Payscout for Paywire', 'payscout-gateway' ),
 					'type'        => 'checkbox',
@@ -158,25 +210,25 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 					'default'     => __( 'Payscout', 'payscout-gateway' ),
 					'desc_tip'    => true,
 				),
-				'public_key'              => array(
+				'public_key'         => array(
 					'title'       => __( 'Public Key', 'payscout-gateway' ),
 					'type'        => 'text',
 					'description' => __( 'Public key that will be used to authenticate API calls', 'payscout-gateway' ),
 					'desc_tip'    => true,
 				),
-				'secret_key'              => array(
+				'secret_key'         => array(
 					'title'       => __( 'Secret Key', 'payscout-gateway' ),
 					'type'        => 'password',
 					'description' => __( 'Secret key that will be used to authenticate API calls', 'payscout-gateway' ),
 					'desc_tip'    => true,
 				),
-				'public_test'              => array(
+				'public_test'        => array(
 					'title'       => __( 'Public Test Key', 'payscout-gateway' ),
 					'type'        => 'text',
 					'description' => __( 'Public test key that will be used to authenticate API calls', 'payscout-gateway' ),
 					'desc_tip'    => true,
 				),
-				'secret_test'              => array(
+				'secret_test'        => array(
 					'title'       => __( 'Secret Test Key', 'payscout-gateway' ),
 					'type'        => 'password',
 					'description' => __( 'Secret test key that will be used to authenticate API calls', 'payscout-gateway' ),
@@ -187,15 +239,15 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 					'type'        => 'textarea',
 					'description' => __( 'Payment method description that the customer will see on your website.', 'payscout-gateway' ),
 					'default'     => __( 'Pay with Credit Card', 'payscout-gateway' ),
-					//'default'     => __( 'Pay with Credit or ACH', 'payscout-gateway' ),
+					/*'default'     => __( 'Pay with Credit or ACH', 'payscout-gateway' ),*/
 					'desc_tip'    => true,
 				),
-				'style'        => array(
+				'style'              => array(
 					'title'       => __( 'Style Object', 'payscout-gateway' ),
 					'type'        => 'textarea',
 					'description' => __( 'Create your style object with quote-encapsulated keys in accordance with Payscout installation instructions.', 'payscout-gateway' ),
 					'default'     => __( '{"base": {"color": "inherit","fontSmoothing": "antialiased","input":{"padding":"10px 0"}},"invalid": {"color": "inherit"}}', 'payscout-gateway' ),
-					//'default'     => __( 'Pay with Credit or ACH', 'payscout-gateway' ),
+					/*'default'     => __( 'Pay with Credit or ACH', 'payscout-gateway' ),*/
 					'desc_tip'    => true,
 				),
 				'instructions'       => array(
@@ -280,57 +332,67 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 
 			return parent::is_available();
 		}
-		
-		private function make_client_secret(){
 
-			if(!empty($this->client_secret)){
+		/**
+		 * Create or retrieve existing client secrets based on the session.
+		 *
+		 * @since 1.0.0
+		 * @return string Client secret.
+		 */
+		private function make_client_secret() {
+
+			if ( ! empty( $this->client_secret ) ) {
 				return $this->client_secret;
-			} else if(isset(WC()->session) && !empty(WC()->session->get('payscout_gateway_client_secret'))){
-				$this->client_secret = WC()->session->get('payscout_gateway_client_secret');
+			} elseif ( isset( WC()->session ) && ! empty( WC()->session->get( 'payscout_gateway_client_secret' ) ) ) {
+				$this->client_secret = WC()->session->get( 'payscout_gateway_client_secret' );
 				return $this->client_secret;
 			}
-			
+
 			global $woocommerce, $post;
-			
-			$post_data = [
-							'amount'=>50,
-							'currency'=>'usd',
-							'payment_method_types'=>['card','us_bank_account'],
-							'capture_method'=>'manual',
-							'confirmation_method'=>'automatic',
-							'application'=>'EPF'
-							//'application'=>'ArcanePOS'
-						];
-						
-			//$post_data['currency'] = get_option('woocommerce_currency','usd');
-			//$post_data['currency'] = get_woocommerce_currency_symbol();
-			$post_data['currency'] = strtolower(get_woocommerce_currency());
-			
+
+			$post_data = array(
+				'amount'               => 50,
+				'currency'             => 'usd',
+				'payment_method_types' => array(
+					'card',
+					'us_bank_account',
+				),
+				'capture_method'       => 'manual',
+				'confirmation_method'  => 'automatic',
+				'application'          => 'EPF',
+			);
+
+			/*
+			$post_data['currency'] = get_option('woocommerce_currency','usd');
+			$post_data['currency'] = get_woocommerce_currency_symbol();
+			*/
+			$post_data['currency'] = strtolower( get_woocommerce_currency() );
+
 			$result = null;
 
-			if( is_checkout() ){
-				
+			if ( is_checkout() ) {
+
 				$order_id = absint( get_query_var( 'order-pay' ) );
 				$order    = wc_get_order( $order_id );
 
-				if($order){
-					$post_data['amount'] = ($order->get_total()*100);
-					$post_data['application_fee_amount'] = (($post_data['amount']*0.05)+0.15);
+				if ( $order ) {
+					$post_data['amount']                 = ( $order->get_total() * 100 );
+					$post_data['application_fee_amount'] = ( ( $post_data['amount'] * 0.05 ) + 0.15 );
 				} else {
-					$post_data['amount'] = (WC()->cart->get_cart_contents_total()*100);
-					$post_data['application_fee_amount'] = (($post_data['amount']*0.05)+0.15);
+					$post_data['amount']                 = ( WC()->cart->get_cart_contents_total() * 100 );
+					$post_data['application_fee_amount'] = ( ( $post_data['amount'] * 0.05 ) + 0.15 );
 				}
 
-				$postdata = json_decode(json_encode($post_data));
+				$postdata = json_decode( wp_json_encode( $post_data ) );
 
-				$pi = WC_Payscout_API::create_payment_intent($postdata);
-				
-				if(isset($pi['body'])){
-					$body = json_decode($pi['body']);
+				$pi = WC_Payscout_API::create_payment_intent( $postdata );
+
+				if ( isset( $pi['body'] ) ) {
+					$body   = json_decode( $pi['body'] );
 					$result = $body->client_secret;
-					WC()->session->set('payscout_gateway_client_secret',$result);
-					if (preg_match('/pi_(.*?)_secret/', $result, $match) == 1) {
-						WC()->session->set('payscout_gateway_payment_intent', $match[1]);
+					WC()->session->set( 'payscout_gateway_client_secret', $result );
+					if ( preg_match( '/pi_(.*?)_secret/', $result, $match ) === 1 ) {
+						WC()->session->set( 'payscout_gateway_payment_intent', $match[1] );
 					}
 				}
 			}
@@ -361,6 +423,8 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			}
 
 			/*
+			Alternative logic.
+
 			if ( Constants::is_true( 'REST_REQUEST' ) ) {
 				global $wp;
 				if ( isset( $wp->query_vars['rest_route'] ) && false !== strpos( $wp->query_vars['rest_route'], '/payment_gateways' ) ) {
@@ -429,7 +493,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		/**
 		 * Converts the chosen rate IDs generated by Shipping Methods to a canonical 'method_id:instance_id' format.
 		 *
-		 * @since  1.1.0
+		 * @since  1.0.0
 		 *
 		 * @param  array $order_shipping_items  Array of WC_Order_Item_Shipping objects.
 		 * @return array $canonical_rate_ids    Rate IDs in a canonical format.
@@ -448,7 +512,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		/**
 		 * Converts the chosen rate IDs generated by Shipping Methods to a canonical 'method_id:instance_id' format.
 		 *
-		 * @since  1.1.0
+		 * @since  1.0.0
 		 *
 		 * @param  array $chosen_package_rate_ids Rate IDs as generated by shipping methods. Can be anything if a shipping method doesn't honor WC conventions.
 		 * @return array $canonical_rate_ids  Rate IDs in a canonical format.
@@ -473,7 +537,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		/**
 		 * Indicates whether a rate exists in an array of canonically-formatted rate IDs that activates this gateway.
 		 *
-		 * @since  1.1.0
+		 * @since  1.0.0
 		 *
 		 * @param array $rate_ids Rate ids to check.
 		 * @return boolean
@@ -482,16 +546,22 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			// First, match entries in 'method_id:instance_id' format. Then, match entries in 'method_id' format by stripping off the instance ID from the candidates.
 			return array_unique( array_merge( array_intersect( $this->enable_for_methods, $rate_ids ), array_intersect( $this->enable_for_methods, array_unique( array_map( 'wc_get_string_before_colon', $rate_ids ) ) ) ) );
 		}
-		
-		public function get_transaction_url( $order ){
 
+		/**
+		 * Gets the transaction URL for the order header.
+		 *
+		 * @since 1.0.0
+		 * @param WC_Order $order The order that this transaction is connected to.
+		 * @return Function Passes a string to the URL filter
+		 */
+		public function get_transaction_url( $order ) {
 			$return_url     = '';
 			$transaction_id = $order->get_transaction_id();
-			
-			$this->view_transaction_url = "https://dbtranz.paywire.com/";
+
+			$this->view_transaction_url = 'https://dbtranz.paywire.com/';
 
 			if ( ! empty( $this->view_transaction_url ) && ! empty( $transaction_id ) ) {
-			  $return_url = sprintf( $this->view_transaction_url, $transaction_id );
+				$return_url = sprintf( $this->view_transaction_url, $transaction_id );
 			}
 
 			return apply_filters( 'woocommerce_get_transaction_url', $return_url, $order, $this );
@@ -505,8 +575,8 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		 */
 		public function process_payment( $order_id ) {
 
-			if(empty($this->client_secret)){
-				$this->client_secret = WC()->session->get('payscout_gateway_client_secret');
+			if ( empty( $this->client_secret ) ) {
+				$this->client_secret = WC()->session->get( 'payscout_gateway_client_secret' );
 			}
 
 			$order = wc_get_order( $order_id );
@@ -516,8 +586,8 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			} else {
 				$order->payment_complete();
 			}
-			WC()->session->set('payscout_gateway_client_secret',null);
-			WC()->session->set('payscout_gateway_payment_intent',null);
+			WC()->session->set( 'payscout_gateway_client_secret', null );
+			WC()->session->set( 'payscout_gateway_payment_intent', null );
 			// Remove cart.
 			WC()->cart->empty_cart();
 
@@ -527,267 +597,281 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 				'redirect' => $this->get_return_url( $order ),
 			);
 		}
-		
+
+		/**
+		 * Returns a formatted customer info array from order data.
+		 *
+		 * @since 1.0.0
+		 * @param WC_Order $order The order created by the customer.
+		 * @return Array Customer information list.
+		 */
 		public function get_customer_info( $order ) {
-			
-			$result = ['receipt_email','shipping'=>['name','address','phone'],'payment_method_data'=>['billing_details'=>['address','email','name','phone']]];
-			
-			if(!empty($order->get_billing_email())){
+			$result = array(
+				'receipt_email',
+				'shipping'            => array(
+					'name',
+					'address',
+					'phone',
+				),
+				'payment_method_data' => array(
+					'billing_details' => array(
+						'address',
+						'email',
+						'name',
+						'phone',
+					),
+				),
+			);
+
+			if ( ! empty( $order->get_billing_email() ) ) {
 				$result['receipt_email'] = $result['payment_method_data']['billing_details']['email'] = $order->get_billing_email();
 			}
-			
-			if(!empty($order->get_shipping_first_name())){
+
+			if ( ! empty( $order->get_shipping_first_name() ) ) {
 				$result['shipping']['name'] = $result['payment_method_data']['billing_details']['name'] = $order->get_shipping_first_name();
 			}
-			if(!empty($order->get_shipping_last_name())){
-				$result['shipping']['name'] .= (' '.$order->get_shipping_last_name());
-				$result['payment_method_data']['billing_details']['name'] .= (' '.$order->get_shipping_last_name());
+
+			if ( ! empty( $order->get_shipping_last_name() ) ) {
+				$result['shipping']['name']                               .= ( ' ' . $order->get_shipping_last_name() );
+				$result['payment_method_data']['billing_details']['name'] .= ( ' ' . $order->get_shipping_last_name() );
 			}
-			if(!empty($result['shipping']['name'])){
-				$result['shipping']['name'] = trim($result['shipping']['name']);
-				$result['payment_method_data']['billing_details']['name'] = trim($result['payment_method_data']['billing_details']['name']);
+
+			if ( ! empty( $result['shipping']['name'] ) ) {
+				$result['shipping']['name']                               = trim( $result['shipping']['name'] );
+				$result['payment_method_data']['billing_details']['name'] = trim( $result['payment_method_data']['billing_details']['name'] );
 			}
-			
-			if(!empty($order->get_billing_phone())){
-				$result['shipping']['phone'] = $order->get_billing_phone();
+
+			if ( ! empty( $order->get_billing_phone() ) ) {
+				$result['shipping']['phone']                               = $order->get_billing_phone();
 				$result['payment_method_data']['billing_details']['phone'] = $order->get_billing_phone();
 			}
-			
-			if(!empty($order->get_shipping_address_1())){
+
+			if ( ! empty( $order->get_shipping_address_1() ) ) {
 				$result['shipping']['address']['line1'] = $order->get_shipping_address_1();
 			}
-			
-			if(!empty($order->get_shipping_address_2())){
+
+			if ( ! empty( $order->get_shipping_address_2() ) ) {
 				$result['shipping']['address']['line2'] = $order->get_shipping_address_2();
 			}
-			
-			if(!empty($order->get_shipping_city())){
+
+			if ( ! empty( $order->get_shipping_city() ) ) {
 				$result['shipping']['address']['city'] = $order->get_shipping_city();
 			}
-			
-			if(!empty($order->get_shipping_state())){
+
+			if ( ! empty( $order->get_shipping_state() ) ) {
 				$result['shipping']['address']['state'] = $order->get_shipping_state();
 			}
-			
-			if(!empty($order->get_shipping_postcode())){
+
+			if ( ! empty( $order->get_shipping_postcode() ) ) {
 				$result['shipping']['address']['postal_code'] = $order->get_shipping_postcode();
 			}
-			
-			if(!empty($order->get_shipping_country())){
+
+			if ( ! empty( $order->get_shipping_country() ) ) {
 				$result['shipping']['address']['country'] = $order->get_shipping_country();
 			}
-		
-			if(!empty($order->get_billing_address_1())){
+
+			if ( ! empty( $order->get_billing_address_1() ) ) {
 				$result['payment_method_data']['billing_details']['address']['line1'] = $order->get_billing_address_1();
 			}
-			
-			if(!empty($order->get_billing_address_2())){
+
+			if ( ! empty( $order->get_billing_address_2() ) ) {
 				$result['payment_method_data']['billing_details']['address']['line2'] = $order->get_billing_address_2();
 			}
-			
-			if(!empty($order->get_billing_city())){
+
+			if ( ! empty( $order->get_billing_city() ) ) {
 				$result['payment_method_data']['billing_details']['address']['city'] = $order->get_billing_city();
 			}
-			
-			if(!empty($order->get_billing_state())){
+
+			if ( ! empty( $order->get_billing_state() ) ) {
 				$result['payment_method_data']['billing_details']['address']['state'] = $order->get_billing_state();
 			}
-			
-			if(!empty($order->get_billing_postcode())){
+
+			if ( ! empty( $order->get_billing_postcode() ) ) {
 				$result['payment_method_data']['billing_details']['address']['postal_code'] = $order->get_billing_postcode();
 			}
-			
-			if(!empty($order->get_billing_country())){
+
+			if ( ! empty( $order->get_billing_country() ) ) {
 				$result['payment_method_data']['billing_details']['address']['country'] = $order->get_billing_country();
 			}
-			
-			return $result;
 
+			return $result;
 		}
-		
+
 		/**
 		 * Gets all order statuses of "pending" or "processing" passes them to the update order status method.
-		**/
-		public static function update_order_statuses(){
-			// Get all orders affected by the patch
-/*
-			$initial_date = strtotime('2023-03-22 19:20:00.000');
-			$final_date = strtotime('2023-03-22 19:40:00.000');
-			$affected = wc_get_orders(array(
-				'limit'=>-1,
-				'type'=> 'shop_order',
-				'date_paid' => $initial_date .'...'. $final_date ,
-				'status'=> array( 'wc-completed', 'completed' )
-				)
-			);
-			foreach($affected as $aff){
-				error_log($aff->get_id().' '.$aff->get_transaction_id().' checking...');
-				$args = array(
-					'meta_key' => '_transaction_id',
-					'meta_value' => $aff->get_transaction_id(),
-					'orderby' => 'date',
-					'order' => 'DESC',
-				);
-				$other_orders = wc_get_orders( $args );
-				foreach($other_orders as $other_order){
-					if($other_order->get_id() !== $aff->get_id()){
-						error_log($other_order->get_id().' DUPLICATE ');
-					}
-				}
-			}
-*/			
-			// Get all orders where status is pending
-			$orders = wc_get_orders(array(
-				'limit'=>-1,
-				'type'=> 'shop_order',
+		 *
+		 * @since 1.0.0
+		 */
+		public static function update_order_statuses() {
+			// Get all orders where status is pending.
+			$params = array(
+				'limit'   => -1,
+				'type'    => 'shop_order',
 				'orderby' => 'date',
-				'order' => 'DESC',
-				'status'=> array( 'wc-pending', 'pending', 'wc-processing', 'processing' )
-				)
+				'order'   => 'DESC',
+				'status'  => array(
+					'wc-pending',
+					'pending',
+					'wc-processing',
+					'processing',
+				),
 			);
-			if(!empty($orders)){
-				foreach($orders as $order){
+			$orders = wc_get_orders( $params );
+			if ( ! empty( $orders ) ) {
+				foreach ( $orders as $order ) {
 					$order_id = $order->get_id();
 					self::update_order_status( $order_id );
 				}
 			}
 		}
-		
+
 		/**
 		 * Reconciles a pending order with its pi status
-		**/
-		public static function update_order_status( $order_id ){
-			// Get the order
-			$order = wc_get_order($order_id);
-			// Get the order status (for good measure)
+		 *
+		 * @since 1.0.0
+		 * @param int $order_id Id of WC_Order object.
+		 */
+		public static function update_order_status( $order_id ) {
+			// Get the order.
+			$order = wc_get_order( $order_id );
+			// Get the order status (for good measure).
 			$oi_status = $order->get_status();
-			// Get the payment method
+			// Get the payment method.
 			$pm = $order->get_payment_method();
-			// Get the transaction ID
+			// Get the transaction ID.
 			$pid = $order->get_transaction_id();
-			if(!empty($pid) && $pm==='payscout'){
-				// Check to see if any newer orders with the same transaction ID exist
-				// This should not occur naturally
-				$args = array(
-					'meta_key' => '_transaction_id',
+			if ( ! empty( $pid ) && 'payscout' === $pm ) {
+				// Check to see if any newer orders with the same transaction ID exist.
+				// This should not occur naturally.
+				$args         = array(
+					'meta_key'   => '_transaction_id',
 					'meta_value' => $pid,
-					'orderby' => 'date',
-					'order' => 'DESC',
+					'orderby'    => 'date',
+					'order'      => 'DESC',
 				);
 				$other_orders = wc_get_orders( $args );
-				$completed = false;
-				// First check to see if any of the matching orders are already marked completed
-				foreach($other_orders as $other_order){
+				$completed    = false;
+				// First check to see if any of the matching orders are already marked completed.
+				foreach ( $other_orders as $other_order ) {
 					$other_order_status = $other_order->get_status();
-					if(in_array($other_order_status,['wc-completed','completed'])){
+					if ( in_array( $other_order_status, array( 'wc-completed', 'completed' ), true ) ) {
 						$completed = true;
 					}
 				}
-				if(!$completed){
-					foreach($other_orders as $other_order){
+				if ( ! $completed ) {
+					foreach ( $other_orders as $other_order ) {
 						$other_order_id = $other_order->get_id();
-						// Since we are ordered in descending date, the first one should be the latest
-						// the remainder should be unset
-						if($other_order_id !== $order_id){
-							$other_order->set_transaction_id(null);
+						// Since we are ordered in descending date, the first one should be the latest.
+						// The remainder should be unset.
+						if ( $other_order_id !== $order_id ) {
+							$other_order->set_transaction_id( null );
 							$other_order->save();
 						}
 					}
 				}
-				// Get the payment intent
-				$pi = WC_Payscout_API::get_payment_intent($pid);
-				if(!empty($pi)&&!empty($pi['body'])){
-					$pi = json_decode($pi['body']);
-					// Get payment intent status | [succeeded,requires_payment_method,requires_confirmation,requires_capture,canceled]
-					$pi_status = !empty($pi->status)? $pi->status : $oi_status;
-					// Get payment intent create date;
-					$pi_date = !empty($pi->created)? $pi->created : time();
-					// If the Payment intent is successful, then the order should be changed to successful
-					if($pi_status==='succeeded'&&!in_array($oi_status,['wc-completed','completed'])){
+				// Get the payment intent.
+				$pi = WC_Payscout_API::get_payment_intent( $pid );
+				if ( ! empty( $pi ) && ! empty( $pi['body'] ) ) {
+					$pi = json_decode( $pi['body'] );
+					// Get payment intent status | [succeeded,requires_payment_method,requires_confirmation,requires_capture,canceled].
+					$pi_status = ! empty( $pi->status ) ? $pi->status : $oi_status;
+					// Get payment intent create date.
+					$pi_date = ! empty( $pi->created ) ? $pi->created : time();
+					// If the Payment intent is successful, then the order should be changed to successful.
+					if ( 'succeeded' === $pi_status && ! in_array( $oi_status, array( 'wc-completed', 'completed' ), true ) ) {
 						$order->payment_complete();
-						//$order->update_status( apply_filters( 'woocommerce_payscout_process_payment_order_status', $order->has_downloadable_item() ? 'wc-invoiced' : 'processing', $order ), __( 'Payments pending.', 'payscout-gateway' ) );
-						$order->set_status('completed');
+						/*$order->update_status( apply_filters( 'woocommerce_payscout_process_payment_order_status', $order->has_downloadable_item() ? 'wc-invoiced' : 'processing', $order ), __( 'Payments pending.', 'payscout-gateway' ) );*/
+						$order->set_status( 'completed' );
 						$order->save();
-					// If the Payment intent is more than 1 week old and order remains pending, close it.
-					} else if(in_array($pi_status,['canceled','cancelled','failed','declined'])||(($pi_date < (time() - 604800)) && in_array($oi_status,['wc-pending','pending','wc-processing','processing']))){
-						$order->set_status('failed');
+						// If the Payment intent is more than 1 week old and order remains pending, close it.
+					} elseif ( in_array( $pi_status, array( 'canceled', 'cancelled', 'failed', 'declined' ), true ) || ( ( $pi_date < ( time() - 604800 ) ) && in_array( $oi_status, array( 'wc-pending', 'pending', 'wc-processing', 'processing' ), true ) ) ) {
+						$order->set_status( 'failed' );
 						$order->save();
 					}
 				}
 			}
 		}
-		
-		private function payscout_payment_processing( $order_id ){
 
-			if(empty($this->client_secret)){
-				$this->client_secret = WC()->session->get('payscout_gateway_client_secret');
+		/**
+		 * Handles the transaction lifecycle for a given order.
+		 *
+		 * @since 1.0.0
+		 * @param int $order_id Id of WC_Order object.
+		 * @throws \Exception If the order transaction process fails.
+		 * @return bool If fails otherwise throws exception.
+		 */
+		private function payscout_payment_processing( $order_id ) {
+
+			if ( empty( $this->client_secret ) ) {
+				$this->client_secret = WC()->session->get( 'payscout_gateway_client_secret' );
 			}
-			if(empty($this->payment_intent)){
-				$this->payment_intent = WC()->session->get('payscout_gateway_payment_intent');
+			if ( empty( $this->payment_intent ) ) {
+				$this->payment_intent = WC()->session->get( 'payscout_gateway_payment_intent' );
 			}
-			if(empty($this->payment_intent)){
-				// PI can be found in the CS between pi_ and _secret
-				if (preg_match('/pi_(.*?)_secret/', $this->client_secret, $match) == 1) {
+			if ( empty( $this->payment_intent ) ) {
+				// PI can be found in the CS between pi_ and _secret.
+				if ( preg_match( '/pi_(.*?)_secret/', $this->client_secret, $match ) === 1 ) {
 					$this->payment_intent = $match[1];
 				}
 			}
-			
+
 			$order = wc_get_order( $order_id );
-			
+
 			if ( $this->lock_order_payment( $order, $this->payment_intent ) ) {
 				return;
 			}
-			
-			$amount = $order->get_total()*100;
-			$appfeemt = ($amount*0.05)+0.15;
-			$postData = [
-							'amount'=>$amount,
-							'capture_method'=>'automatic',
-							'application_fee_amount'=>$appfeemt,
-							// 'customer'=>$customer // Will be enabled when customer endpoints go live, provided that we have customer ID stored in WC metadata
-						];
-			
-			$customerDetails = $this->get_customer_info( $order );
-			
-			$pm_billing_details = $customerDetails['payment_method_data'];
-			
-			if(count(array_filter($pm_billing_details))){
-				$payment_intent = WC_Payscout_API::get_payment_intent($this->payment_intent);
-				if(!empty($payment_intent) && !empty($payment_intent['body']) && !empty(json_decode($payment_intent['body'])->payment_method)){
-					WC_Payscout_API::update_payment_method(json_decode($payment_intent['body'])->payment_method,$customerDetails['payment_method_data']);
+
+			$amount    = $order->get_total() * 100;
+			$appfeemt  = ( $amount * 0.05 ) + 0.15;
+			$post_data = array(
+				'amount'                 => $amount,
+				'capture_method'         => 'automatic',
+				'application_fee_amount' => $appfeemt,
+				/* 'customer'=>$customer // Will be enabled when customer endpoints go live, provided that we have customer ID stored in WC metadata. */
+			);
+
+			$customer_details = $this->get_customer_info( $order );
+
+			$pm_billing_details = $customer_details['payment_method_data'];
+
+			if ( count( array_filter( $pm_billing_details ) ) ) {
+				$payment_intent = WC_Payscout_API::get_payment_intent( $this->payment_intent );
+				if ( ! empty( $payment_intent ) && ! empty( $payment_intent['body'] ) && ! empty( json_decode( $payment_intent['body'] )->payment_method ) ) {
+					WC_Payscout_API::update_payment_method( json_decode( $payment_intent['body'] )->payment_method, $customer_details['payment_method_data'] );
 				}
 			}
-			
-			unset($customerDetails['payment_method_data']);
-			
-			$postData = array_merge($postData, $customerDetails);
 
-			// Update the PI based on updated shipping and tax
-			$updated = WC_Payscout_API::update_payment_intent($this->payment_intent,$postData);
-			
+			unset( $customer_details['payment_method_data'] );
+
+			$post_data = array_merge( $post_data, $customer_details );
+
+			// Update the PI based on updated shipping and tax.
+			$updated = WC_Payscout_API::update_payment_intent( $this->payment_intent, $post_data );
+
 			$flag = false;
-			
-			if(!empty($updated) && !empty($updated['body'])){
-			
-				// Confirm and Capture the PI (capture method was automatic in previous step, so we do not need to capture again)
-				$confirm = WC_Payscout_API::confirm_payment_intent(json_decode($updated['body'])->id);
 
-				//$capture = WC_Payscout_API::capture_payment_intent($this->payment_intent);
+			if ( ! empty( $updated ) && ! empty( $updated['body'] ) ) {
 
-				if(!empty($confirm)){
-					$body = json_decode($confirm['body']);
-					if(empty($body->error)){
+				// Confirm and Capture the PI (capture method was automatic in previous step, so we do not need to capture again).
+				$confirm = WC_Payscout_API::confirm_payment_intent( json_decode( $updated['body'] )->id );
+
+				/*$capture = WC_Payscout_API::capture_payment_intent( $this->payment_intent );*/
+
+				if ( ! empty( $confirm ) ) {
+					$body = json_decode( $confirm['body'] );
+					if ( empty( $body->error ) ) {
 						$flag = true;
 					} else {
-						$localized_message = __( $body->error->message, 'payscout-gateway' );
+						$message           = $body->error->message;
+						$localized_message = __( $message, 'payscout-gateway' );
 					}
 				}
 			}
-			
+
 			$order->set_transaction_id( $this->payment_intent );
-			
-			if($flag === false){
-				$localized_message = !empty($localized_message)? $localized_message : __( 'Payment processing failed. Please retry.', 'payscout-gateway' );
+
+			if ( false === $flag ) {
+				$localized_message = ! empty( $localized_message ) ? $localized_message : __( 'Payment processing failed. Please retry.', 'payscout-gateway' );
 				$order->add_order_note( $localized_message );
 				$this->unlock_order_payment( $order );
 				$order->save();
@@ -797,19 +881,18 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 				// Mark as processing or on-hold (payment won't be taken until delivery).
 				$order->update_status( apply_filters( 'woocommerce_payscout_process_payment_order_status', $order->has_downloadable_item() ? 'wc-invoiced' : 'processing', $order ), __( 'Payments pending.', 'payscout-gateway' ) );
 			}
-			
+
 			$order->save();
-			
+
 			$this->unlock_order_payment( $order );
-			WC()->session->set('payscout_gateway_client_secret',null);
-			WC()->session->set('payscout_gateway_payment_intent',null);
-			
+			WC()->session->set( 'payscout_gateway_client_secret', null );
+			WC()->session->set( 'payscout_gateway_payment_intent', null );
 		}
 
 		/**
 		 * Locks an order for payment intent processing for 5 minutes.
 		 *
-		 * @since 1.0
+		 * @since 1.0.0
 		 * @param WC_Order $order  The order that is being paid.
 		 * @param stdClass $intent The intent that is being processed.
 		 * @return bool            A flag that indicates whether the order is already locked.
@@ -823,7 +906,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 			if ( '-1' === $processing || ( isset( $intent ) && $processing === $intent ) ) {
 				return true;
 			}
-			WC()->session->set('payscout_gateway_payment_intent',$intent);
+			WC()->session->set( 'payscout_gateway_payment_intent', $intent );
 			// Save the new intent as a transient, eventually overwriting another one.
 			set_transient( $transient_name, empty( $intent ) ? '-1' : $intent, 5 * MINUTE_IN_SECONDS );
 
@@ -833,7 +916,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		/**
 		 * Unlocks an order for processing by payment intents.
 		 *
-		 * @since 4.2
+		 * @since 1.0.0
 		 * @param WC_Order $order The order that is being unlocked.
 		 */
 		public function unlock_order_payment( $order ) {
@@ -843,6 +926,8 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 
 		/**
 		 * Output for the order received page.
+		 *
+		 * @since 1.0.0
 		 */
 		public function thankyou_page() {
 			if ( $this->instructions ) {
@@ -853,7 +938,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		/**
 		 * Change payment complete order status to completed for Payscout orders.
 		 *
-		 * @since  1.1.0
+		 * @since  1.0.0
 		 * @param  string         $status Current order status.
 		 * @param  int            $order_id Order ID.
 		 * @param  WC_Order|false $order Order object.
@@ -867,7 +952,7 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		}
 
 		/**
-		 * Add content to the WC emails.
+		 * Adds content to the WC emails.
 		 *
 		 * @param WC_Order $order Order object.
 		 * @param bool     $sent_to_admin  Sent to admin.
@@ -880,4 +965,3 @@ if(!class_exists('WC_Payscout_Paywire_Gateway')){
 		}
 	}
 }
-?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * WP Async Request
+ * Payscout Paywire Gateway Plugin Uninstall
  *
  * @package 1.0.0
  */
