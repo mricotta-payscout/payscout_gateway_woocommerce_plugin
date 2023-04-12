@@ -73,7 +73,7 @@ function payscout_payment_init(){
 			 *
 			 * @return void
 			 */
-			private function __wakeup() {}
+			public function __wakeup() {}
 
 			/**
 			 * Protected constructor to prevent creating a new instance of the
