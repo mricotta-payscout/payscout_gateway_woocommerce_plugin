@@ -69,7 +69,6 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 				$this->secret_key     = $this->get_option( 'secret_test', '' );
 				$this->secret_key     = $this->get_option( 'secret_test', '' );
 				$this->script_library = 'https://dbstage1.paywire.com/epf/library/embed.js';
-				/*$this->script_library = 'http://www.paywire.com/library/embed.js';*/
 			}
 
 			// Actions.
@@ -181,7 +180,8 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 				'var wc_payment_gateway_params = ' . wp_json_encode( $params ),
 			);
 			foreach ( $scripts as $script ) {
-				echo $this->format_js( trim( $script ) ) . "\n";
+				$element = $this->format_js( trim( $script ) );
+				esc_html_e( $element . "\n" );
 			}
 		}
 
@@ -241,8 +241,7 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 					'title'       => __( 'Description', 'payscout-gateway' ),
 					'type'        => 'textarea',
 					'description' => __( 'Payment method description that the customer will see on your website.', 'payscout-gateway' ),
-					'default'     => __( 'Pay with Credit Card', 'payscout-gateway' ),
-					/*'default'     => __( 'Pay with Credit or ACH', 'payscout-gateway' ),*/
+					'default'     => __( 'Pay with Credit Card or Alternative', 'payscout-gateway' ),
 					'desc_tip'    => true,
 				),
 				'style'              => array(
@@ -250,7 +249,6 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 					'type'        => 'textarea',
 					'description' => __( 'Create your style object with quote-encapsulated keys in accordance with Payscout installation instructions.', 'payscout-gateway' ),
 					'default'     => __( '{"base": {"color": "inherit","fontSmoothing": "antialiased","input":{"padding":"10px 0"}},"invalid": {"color": "inherit"}}', 'payscout-gateway' ),
-					/*'default'     => __( 'Pay with Credit or ACH', 'payscout-gateway' ),*/
 					'desc_tip'    => true,
 				),
 				'instructions'       => array(
@@ -365,10 +363,6 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 				'application'          => 'EPF',
 			);
 
-			/*
-			$post_data['currency'] = get_option('woocommerce_currency','usd');
-			$post_data['currency'] = get_woocommerce_currency_symbol();
-			*/
 			$post_data['currency'] = strtolower( get_woocommerce_currency() );
 
 			$result = null;
@@ -424,17 +418,6 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 
 				return true;
 			}
-
-			/*
-			Alternative logic.
-
-			if ( Constants::is_true( 'REST_REQUEST' ) ) {
-				global $wp;
-				if ( isset( $wp->query_vars['rest_route'] ) && false !== strpos( $wp->query_vars['rest_route'], '/payment_gateways' ) ) {
-					return true;
-				}
-			}
-			*/
 
 			return false;
 		}
@@ -783,7 +766,7 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 					// If the Payment intent is successful, then the order should be changed to successful.
 					if ( 'succeeded' === $pi_status && ! in_array( $oi_status, array( 'wc-completed', 'completed' ), true ) ) {
 						$order->payment_complete();
-						/*$order->update_status( apply_filters( 'woocommerce_payscout_process_payment_order_status', $order->has_downloadable_item() ? 'wc-invoiced' : 'processing', $order ), __( 'Payments pending.', 'payscout-gateway' ) );*/
+						// We can also perform update through the update_status method like this: $order->update_status( apply_filters( 'woocommerce_payscout_process_payment_order_status', $order->has_downloadable_item() ? 'wc-invoiced' : 'processing', $order ), __( 'Payments pending.', 'payscout-gateway' ) ).
 						$order->set_status( 'completed' );
 						$order->save();
 						// If the Payment intent is more than 1 week old and order remains pending, close it.
@@ -830,7 +813,7 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 				'amount'                 => $amount,
 				'capture_method'         => 'automatic',
 				'application_fee_amount' => $appfeemt,
-				/* 'customer'=>$customer // Will be enabled when customer endpoints go live, provided that we have customer ID stored in WC metadata. */
+				// When customer ID becomes stored, we can add 'customer'=>$customer.
 			);
 
 			$customer_details = $this->get_customer_info( $order );
@@ -858,7 +841,7 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 				// Confirm and Capture the PI (capture method was automatic in previous step, so we do not need to capture again).
 				$confirm = WC_Payscout_Paywire_API::confirm_payment_intent( json_decode( $updated['body'] )->id );
 
-				/*$capture = WC_Payscout_Paywire_API::capture_payment_intent( $this->payment_intent );*/
+				// When not using auto capture, you can use this to capture funds WC_Payscout_Paywire_API::capture_payment_intent( $this->payment_intent ).
 
 				if ( ! empty( $confirm ) ) {
 					$body = json_decode( $confirm['body'] );

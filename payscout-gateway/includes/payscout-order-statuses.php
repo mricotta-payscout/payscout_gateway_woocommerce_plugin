@@ -37,6 +37,7 @@ function register_payscout_order_statuses() {
 			'exclude_from_search'       => false,
 			'show_in_admin_all_list'    => true,
 			'show_in_admin_status_list' => true,
+			/* translators: %s: 0 */
 			'label_count'               => _n_noop( 'Invoices <span class="count">(%s)</span>', 'Invoices <span class="count">(%s)</span>', 'pascout-gateway' ),
 		),
 	);
@@ -70,8 +71,8 @@ function payscout_add_bulk_invoice_order_status() {
 		?>
 			<script type="text/javascript">
 				jQuery(document).ready(function(){
-					jQuery('<option>').val('mark_invoiced').text('<?php _e( 'Change status to invoiced', 'payscout-gateway' ); ?>').appendTo("select[name='action']");
-					jQuery('<option>').val('mark_invoiced').text('<?php _e( 'Change status to invoiced', 'payscout-gateway' ); ?>').appendTo("select[name='action2']");
+					jQuery('<option>').val('mark_invoiced').text('<?php esc_html_e( 'Change status to invoiced', 'payscout-gateway' ); ?>').appendTo("select[name='action']");
+					jQuery('<option>').val('mark_invoiced').text('<?php esc_html_e( 'Change status to invoiced', 'payscout-gateway' ); ?>').appendTo("select[name='action2']");
 				});
 			</script>
 		<?php
