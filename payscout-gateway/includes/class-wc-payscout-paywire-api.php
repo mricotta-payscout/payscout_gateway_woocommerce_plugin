@@ -3,7 +3,7 @@
  * Payscout Gateway API
  *
  * @package 1.0.0
- * @class       WC_Payscout_API
+ * @class       WC_Payscout_Paywire_API
  * @version     1.0.0
  */
 
@@ -22,7 +22,7 @@
  * Text Domain: payscout-gateway
  * Domain Path: /languages
  */
-class WC_Payscout_API {
+class WC_Payscout_Paywire_API {
 
 	/**
 	 * Public key.

@@ -61,7 +61,7 @@ function payscout_payment_init() {
 	 * @version 1.0.0
 	 * @since 1.0.0
 	 */
-	class WC_Payment_Gateway_Init {
+	class WC_Payscout_Payment_Gateway_Init {
 
 		/**
 		 * Singleton instance.
@@ -198,7 +198,7 @@ function payscout_payment_init() {
 		}
 	}
 
-	WC_Payment_Gateway_Init::get_instance();
+	WC_Payscout_Payment_Gateway_Init::get_instance();
 
 }
 

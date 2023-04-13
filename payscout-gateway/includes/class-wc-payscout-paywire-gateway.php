@@ -388,7 +388,7 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 
 				$postdata = json_decode( wp_json_encode( $post_data ) );
 
-				$pi = WC_Payscout_API::create_payment_intent( $postdata );
+				$pi = WC_Payscout_Paywire_API::create_payment_intent( $postdata );
 
 				if ( isset( $pi['body'] ) ) {
 					$body   = json_decode( $pi['body'] );
@@ -773,7 +773,7 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 					}
 				}
 				// Get the payment intent.
-				$pi = WC_Payscout_API::get_payment_intent( $pid );
+				$pi = WC_Payscout_Paywire_API::get_payment_intent( $pid );
 				if ( ! empty( $pi ) && ! empty( $pi['body'] ) ) {
 					$pi = json_decode( $pi['body'] );
 					// Get payment intent status | [succeeded,requires_payment_method,requires_confirmation,requires_capture,canceled].
@@ -838,9 +838,9 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 			$pm_billing_details = $customer_details['payment_method_data'];
 
 			if ( count( array_filter( $pm_billing_details ) ) ) {
-				$payment_intent = WC_Payscout_API::get_payment_intent( $this->payment_intent );
+				$payment_intent = WC_Payscout_Paywire_API::get_payment_intent( $this->payment_intent );
 				if ( ! empty( $payment_intent ) && ! empty( $payment_intent['body'] ) && ! empty( json_decode( $payment_intent['body'] )->payment_method ) ) {
-					WC_Payscout_API::update_payment_method( json_decode( $payment_intent['body'] )->payment_method, $customer_details['payment_method_data'] );
+					WC_Payscout_Paywire_API::update_payment_method( json_decode( $payment_intent['body'] )->payment_method, $customer_details['payment_method_data'] );
 				}
 			}
 
@@ -849,16 +849,16 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 			$post_data = array_merge( $post_data, $customer_details );
 
 			// Update the PI based on updated shipping and tax.
-			$updated = WC_Payscout_API::update_payment_intent( $this->payment_intent, $post_data );
+			$updated = WC_Payscout_Paywire_API::update_payment_intent( $this->payment_intent, $post_data );
 
 			$flag = false;
 
 			if ( ! empty( $updated ) && ! empty( $updated['body'] ) ) {
 
 				// Confirm and Capture the PI (capture method was automatic in previous step, so we do not need to capture again).
-				$confirm = WC_Payscout_API::confirm_payment_intent( json_decode( $updated['body'] )->id );
+				$confirm = WC_Payscout_Paywire_API::confirm_payment_intent( json_decode( $updated['body'] )->id );
 
-				/*$capture = WC_Payscout_API::capture_payment_intent( $this->payment_intent );*/
+				/*$capture = WC_Payscout_Paywire_API::capture_payment_intent( $this->payment_intent );*/
 
 				if ( ! empty( $confirm ) ) {
 					$body = json_decode( $confirm['body'] );
