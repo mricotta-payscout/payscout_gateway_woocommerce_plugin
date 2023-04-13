@@ -69,7 +69,7 @@ let execute = ( function( postLoad=false, counter = 0 ) {
 				let data          = {};
 				let components    = payscout.components();
 				let style         = { base: { } };
-				if ( wc_payment_gateway_params.style !== null && wc_payment_gateway_params.style.length > 0 ) {
+				if ( null !== wc_payment_gateway_params.style && wc_payment_gateway_params.style.length > 0 ) {
 					style = JSON.parse( wc_payment_gateway_params.style );
 				}
 				let card = components.create( 'card', {style: style} );
@@ -162,7 +162,7 @@ let execute = ( function( postLoad=false, counter = 0 ) {
 					let processTransaction = ( function( e ) {
 						let address_fields = { 'city':'city', 'country':'country', 'address_1':'line1', 'address_2':'line2', 'postcode':'postal_code', 'state':'state', 'phone':'phone' };
 
-						if ( "none" !== document.querySelector( '.woocommerce-billing-fields' ) && document.querySelector( '.woocommerce-billing-fields' ).style.display ) {
+						if ( document.querySelector( '.woocommerce-billing-fields' ) && "none" !== document.querySelector( '.woocommerce-billing-fields' ).style.display ) {
 							params.billing_details = { 'name':'', 'address': {} };
 							document.querySelectorAll( '.woocommerce-billing-fields input, .woocommerce-billing-fields select' ).forEach(
 								(item) => {

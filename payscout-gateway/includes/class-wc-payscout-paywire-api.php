@@ -1,6 +1,6 @@
 <?php
 /**
- * Payscout Gateway API
+ * Payscout Paywire Gateway API
  *
  * @package 1.0.0
  * @class       WC_Payscout_Paywire_API

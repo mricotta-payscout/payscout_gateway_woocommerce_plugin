@@ -163,8 +163,8 @@ function payscout_payment_init() {
 			add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'settings_link' ) );
 
 			if ( class_exists( 'WC_Payment_Gateway' ) ) {
-				require_once plugin_dir_path( __FILE__ ) . '/includes/class-wc-payment-gateway-payscout-api.php';
-				require_once plugin_dir_path( __FILE__ ) . '/includes/class-wc-payment-gateway-payscout-gateway.php';
+				require_once plugin_dir_path( __FILE__ ) . '/includes/class-wc-payscout-paywire-api.php';
+				require_once plugin_dir_path( __FILE__ ) . '/includes/class-wc-payscout-paywire-gateway.php';
 				require_once plugin_dir_path( __FILE__ ) . '/includes/payscout-order-statuses.php';
 				require_once plugin_dir_path( __FILE__ ) . '/includes/payscout-output.php';
 			}

@@ -40,7 +40,7 @@ function payscout_gateway_mount_point( $description, $payment_id ) {
 
 	ob_start();
 
-	echo '<div id="payscout_paywire_gateway_container"><button id="reloadButton" type="button" class="button" onClick="window.location.reload()">Form Not Loaded? Click Here</button></div><div id="payscout_paywire_gateway_message" class="alert">&nbsp;</div>';
+	echo '<div id="payscout_paywire_gateway_container"><button id="reloadButton" type="button" class="button" onClick="window.location.reload()">Form Not Loading? Wait 10 Seconds Then Click Here</button></div><div id="payscout_paywire_gateway_message" class="alert">&nbsp;</div>';
 
 	$description .= ob_get_clean();
 

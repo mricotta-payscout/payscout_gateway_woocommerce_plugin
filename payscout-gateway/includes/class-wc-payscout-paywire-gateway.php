@@ -194,14 +194,14 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 			$this->form_fields = array(
 				'enabled'            => array(
 					'title'       => __( 'Enable/Disable', 'payscout-gateway' ),
-					'label'       => __( 'Enable payment via Payscout for Paywire', 'payscout-gateway' ),
+					'label'       => __( 'Enable gateway', 'payscout-gateway' ),
 					'type'        => 'checkbox',
 					'description' => '',
 					'default'     => 'no',
 				),
 				'livemode'           => array(
 					'title'       => __( 'Live/Test', 'payscout-gateway' ),
-					'label'       => __( 'Enable live mode via Payscout for Paywire', 'payscout-gateway' ),
+					'label'       => __( 'Enable live mode', 'payscout-gateway' ),
 					'type'        => 'checkbox',
 					'description' => '',
 					'default'     => 'no',
