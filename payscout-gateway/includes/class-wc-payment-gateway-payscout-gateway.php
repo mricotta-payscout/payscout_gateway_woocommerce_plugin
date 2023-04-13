@@ -23,9 +23,12 @@
 if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 
 	/**
-	 * Gateway class.
+	 * Provides a Payscout Paywire Payment Gateway.
 	 *
-	 * @version 1.0.0
+	 * @class       WC_Payscout_Paywire_Gateway
+	 * @extends     WC_Payment_Gateway
+	 * @version     1.0.0
+	 * @package     WooCommerce\Classes\Payment
 	 * @since 1.0.0
 	 */
 	class WC_Payscout_Paywire_Gateway extends WC_Payment_Gateway {
@@ -156,7 +159,7 @@ if ( ! class_exists( 'WC_Payscout_Paywire_Gateway' ) ) {
 		 * @param array $params URL parameters for JS.
 		 */
 		public function enqueue_scripts( $params ) {
-			wp_register_style( 'payscout', PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/css/payscout.css', array(), '1.0.0' );
+			wp_register_style( 'payscout', PAYSCOUT_PAYWIRE_GATEWAY_PLUGIN_URL . '/assets/css/payscout.css', array(), ( defined( 'PAYSCOUT_PAYWIRE_GATEWAY_VERSION' ) ? PAYSCOUT_PAYWIRE_GATEWAY_VERSION : '1.0.0' ) );
 			wp_enqueue_style( 'payscout' );
 			wp_register_script( 'payscout', $this->script_library, '', '1.0', true );
 			wp_enqueue_script( 'payscout' );

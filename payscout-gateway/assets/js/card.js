@@ -20,7 +20,7 @@
  * Text Domain: payscout-gateway
  * Domain Path: /languages
  */
-let execute = (function(postLoad=false,counter=0) {
+let execute = ( function( postLoad=false, counter = 0 ) {
 	if ( ! document.querySelector( '#payscout_paywire_gateway_container iframe' ) ) {
 		return new Promise(
 			(resolve, reject) => {
@@ -36,7 +36,7 @@ let execute = (function(postLoad=false,counter=0) {
 				} else {
 					setTimeout(
 						function() {
-							execute( false,counter + 1 );
+							execute( false, ( counter + 1 ) );
 						},
 						1000
 					);
@@ -52,7 +52,7 @@ let execute = (function(postLoad=false,counter=0) {
 						} else {
 							setTimeout(
 								function() {
-									execute( true,8 );
+									execute( true, 8 );
 								},
 								1000
 							);
@@ -68,7 +68,7 @@ let execute = (function(postLoad=false,counter=0) {
 				let payscout      = new Payscout( key );
 				let data          = {};
 				let components    = payscout.components();
-				let style         = {base: { }};
+				let style         = { base: { } };
 				if ( wc_payment_gateway_params.style !== null && wc_payment_gateway_params.style.length > 0 ) {
 					style = JSON.parse( wc_payment_gateway_params.style );
 				}
@@ -86,9 +86,9 @@ let execute = (function(postLoad=false,counter=0) {
 
 							// WC will reload components when form values change, which can cause this to disappear.  To address this, we need to listen to changes.
 							const observer = new MutationObserver(
-								function(mutationList, observer) {
-									for (const mutation of mutationList) {
-										if ( mutation.type === 'childList' ) {
+								function( mutationList, observer ) {
+									for ( const mutation of mutationList ) {
+										if ( 'childList' === mutation.type ) {
 											if ( ! document.querySelector( '#payscout_paywire_gateway_container iframe' ) ) {
 												card.mount( '#payscout_paywire_gateway_container' );
 												document.querySelector( '#reloadButton' ).remove();
@@ -110,26 +110,26 @@ let execute = (function(postLoad=false,counter=0) {
 						1000
 					);
 				}
-				function clearMessage(){
+				function clearMessage() {
 					let item         = document.querySelector( '#payscout_paywire_gateway_message' );
 					item.textContent = '';
-					item.classList.remove( "alert-danger","alert-warning","alert-success" );
+					item.classList.remove( "alert-danger", "alert-warning", "alert-success" );
 				}
-				function showMessage(type,message){
+				function showMessage( type, message ) {
 					clearMessage();
 					let item = document.querySelector( '#payscout_paywire_gateway_message' );
-					if ( type == 'error' ) {
+					if ( 'error' === type ) {
 						item.classList.add( "alert-danger" );
-					} else if ( type == 'success' ) {
+					} else if ( 'success' === type ) {
 						item.classList.add( "alert-success" );
 					} else {
 						item.classList.add( "alert-warning" );
 					}
 					item.innerHTML = message;
 				}
-				function preventOnClick(event){
+				function preventOnClick( event ) {
 					let target = event.target;
-					if ( target.ariaDisabled === 'true' ) {
+					if ( 'true' === target.ariaDisabled ) {
 						event.preventDefault();
 						target.setAttribute( 'aria-disabled', false );
 						target.classList.remove( 'disabled' );
@@ -145,11 +145,11 @@ let execute = (function(postLoad=false,counter=0) {
 
 					card.on(
 						'focus',
-						function(e){
+						function( e ) {
 							clearMessage();
 							if ( document.querySelector( '[type="submit"]' ) ) {
 								document.querySelectorAll( '[type="submit"]' ).forEach(
-									(button) => {
+									( button ) => {
 										button.setAttribute( 'aria-disabled', true );
 										button.classList.add( 'disabled' );
 										button.addEventListener( 'click', preventOnClick );
@@ -159,20 +159,20 @@ let execute = (function(postLoad=false,counter=0) {
 						}
 					);
 
-					let processTransaction = (function(e){
-						let address_fields = {'city':'city','country':'country','address_1':'line1','address_2':'line2','postcode':'postal_code','state':'state','phone':'phone'};
+					let processTransaction = ( function( e ) {
+						let address_fields = { 'city':'city', 'country':'country', 'address_1':'line1', 'address_2':'line2', 'postcode':'postal_code', 'state':'state', 'phone':'phone' };
 
-						if ( document.querySelector( '.woocommerce-billing-fields' ) && document.querySelector( '.woocommerce-billing-fields' ).style.display !== "none" ) {
-							params.billing_details = { 'name':'', 'address': {}};
+						if ( "none" !== document.querySelector( '.woocommerce-billing-fields' ) && document.querySelector( '.woocommerce-billing-fields' ).style.display ) {
+							params.billing_details = { 'name':'', 'address': {} };
 							document.querySelectorAll( '.woocommerce-billing-fields input, .woocommerce-billing-fields select' ).forEach(
 								(item) => {
-									let id         = item.getAttribute( 'id' ).replace( 'billing_','' );
-									if ( id === 'first_name' || id === 'last_name' || id === 'name' ) {
+									let id         = item.getAttribute( 'id' ).replace( 'billing_', '' );
+									if ( 'first_name' === id || 'last_name' === id || 'name' === id ) {
 										params.billing_details.name += item.value + ' '.trim();
 									} else if ( id in address_fields ) {
-											let index                             = address_fields[id];
-											params.billing_details.address[index] = item.value;
-									} else if ( id === 'billing_email' ) {
+										let index                             = address_fields[id];
+										params.billing_details.address[index] = item.value;
+									} else if ( 'billing_email' === id ) {
 										params.billing_details = item.value;
 										params.receipt_email   = item.value;
 									}
@@ -180,16 +180,16 @@ let execute = (function(postLoad=false,counter=0) {
 							);
 						}
 
-						if ( document.querySelector( '.woocommerce-shipping-fields' ) && document.querySelector( '.woocommerce-shipping-fields' ).style.display !== "none" ) {
+						if ( document.querySelector( 'none' !== '.woocommerce-shipping-fields' ) && document.querySelector( '.woocommerce-shipping-fields' ).style.display ) {
 							params.shipping = { 'name':'', 'address': {}};
 							document.querySelectorAll( '.woocommerce-shipping-fields input, .woocommerce-shipping-fields select' ).forEach(
 								(item) => {
-									let id  = item.getAttribute( 'id' ).replace( 'shipping_','' );
-									if ( id === 'first_name' || id === 'last_name' || id === 'name' ) {
+									let id  = item.getAttribute( 'id' ).replace( 'shipping_', '' );
+									if ( 'first_name' === id || 'last_name' === id || 'name' === id ) {
 										params.shipping.name += item.value + ' '.trim();
-									} else if (id in address_fields) {
-											let index                      = address_fields[id];
-											params.shipping.address[index] = item.value;
+									} else if ( id in address_fields ) {
+										let index                      = address_fields[id];
+										params.shipping.address[index] = item.value;
 									}
 								}
 							);
@@ -207,7 +207,7 @@ let execute = (function(postLoad=false,counter=0) {
 							params
 							/* setup_future_usage: 'off_session', */
 						).then(
-							(result) => {
+							( result ) => {
 								if ( result.error ) {
 									showMessage( 'error',result.error.message );
 									return false;
@@ -216,28 +216,28 @@ let execute = (function(postLoad=false,counter=0) {
 									return false;
 								} else {
 									// Now that we have a PM, attach it to the PI.
-									return payscout.updatePaymentIntent( client_secret, {'payment_method':result.id} );
+									return payscout.updatePaymentIntent( client_secret, { 'payment_method':result.id } );
 								}
 							}
 						).then(
-							function(result) {
+							function( result ) {
 								if ( result.error ) {
-									if (result.error.message === 'Nullable object must have a value.') {
+									if ( 'Nullable object must have a value.' === result.error.message ) {
 										clearMessage();
 									} else {
-										showMessage( 'error',result.error.message );
+										showMessage( 'error', result.error.message );
 									}
 								} else if ( ! result ) {
 									// If the previous step is false, we should already have a message from either the 1st
 									// condition or the 2nd condition which is caught.
 								} else {
-									showMessage( 'success','Payment Method Valid' );
+									showMessage( 'success', 'Payment Method Valid' );
 								}
 
-								if (document.querySelector( '[type="submit"]' )) {
+								if ( document.querySelector( '[type="submit"]' ) ) {
 									document.querySelectorAll( '[type="submit"]' ).forEach(
-										(button) => {
-											if ( button.ariaDisabled === 'true' ) {
+										( button ) => {
+											if ( 'true' === button.ariaDisabled ) {
 												setTimeout(
 													function () {
 														button.setAttribute( 'aria-disabled', false );
@@ -256,20 +256,20 @@ let execute = (function(postLoad=false,counter=0) {
 						).catch(
 							result => {
 								if ( result.error ) {
-									if ( result.error.message === 'Nullable object must have a value.' ) {
+									if ( 'Nullable object must have a value.' === result.error.message ) {
 										clearMessage();
 									} else {
-										showMessage( 'error',result.error.message );
+										showMessage( 'error', result.error.message );
 									}
-								} else if ( result.type && result.type === 'card_error' ) {
-										showMessage( 'error',result.message );
+								} else if ( result.type && 'card_error' === result.type ) {
+										showMessage( 'error', result.message );
 								} else {
 										clearMessage();
 								}
 								if ( document.querySelector( '[type="submit"]' ) ) {
 									document.querySelectorAll( '[type="submit"]' ).forEach(
-										(button) => {
-											if ( button.ariaDisabled === 'true' ) {
+										( button ) => {
+											if ( 'true' === button.ariaDisabled ) {
 												setTimeout(
 													function () {
 														button.setAttribute( 'aria-disabled', false );
@@ -289,7 +289,7 @@ let execute = (function(postLoad=false,counter=0) {
 
 					card.on(
 						'blur',
-						function(e){
+						function( e ) {
 							processTransaction( e );
 						}
 					);
@@ -314,7 +314,7 @@ let execute = (function(postLoad=false,counter=0) {
 /* global wc_payment_gateway_params */
 document.addEventListener(
 	'DOMContentLoaded',
-	function(event) {
+	function( event ) {
 		execute();
 	}
 );

@@ -126,7 +126,7 @@ class WC_Payscout_API {
 
 			if ( ( ! $response instanceof WP_Error ) && 200 === $response['response']['code'] ) {
 				return $response;
-			} elseif ( isset( $response['body'] ) && isset( json_decode( $response['body'] )->error ) && isset( json_decode( $response['body'] )->error->message ) && ( json_decode( $response['body'] )->error->message === 'Invalid payment intent status: processing' || json_decode( $response['body'] )->error->message === 'Invalid payment intent status: succeeded' ) ) {
+			} elseif ( is_array( $response ) && isset( $response['body'] ) && isset( json_decode( $response['body'] )->error ) && isset( json_decode( $response['body'] )->error->message ) && ( json_decode( $response['body'] )->error->message === 'Invalid payment intent status: processing' || json_decode( $response['body'] )->error->message === 'Invalid payment intent status: succeeded' ) ) {
 				return self::get_payment_intent( $id );
 			}
 		}
@@ -196,7 +196,7 @@ class WC_Payscout_API {
 			);
 			if ( ( ! $response instanceof WP_Error ) && 200 === $response['response']['code'] ) {
 				return $response;
-			} elseif ( isset( $response['body'] ) && isset( json_decode( $response['body'] )->error ) && isset( json_decode( $response['body'] )->error->message ) && ( json_decode( $response['body'] )->error->message === 'Invalid payment intent status: processing' || json_decode( $response['body'] )->error->message === 'Invalid payment intent status: succeeded' ) ) {
+			} elseif ( is_array( $response ) && isset( $response['body'] ) && isset( json_decode( $response['body'] )->error ) && isset( json_decode( $response['body'] )->error->message ) && ( json_decode( $response['body'] )->error->message === 'Invalid payment intent status: processing' || json_decode( $response['body'] )->error->message === 'Invalid payment intent status: succeeded' ) ) {
 				return self::get_payment_intent( $id );
 			}
 		}
